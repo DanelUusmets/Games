@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="et">
+<head>
+<meta charset="UTF-8">
+<title>Auto Runner 🚗</title>
+<style>
+  body {
+    margin: 0;
+    background: #222;
+    color: white;
+    font-family: Arial;
+    text-align: center;
+  }
+  canvas {
+    display: block;
+    margin: auto;
+    background: #555;
+  }
+  button {
+    margin-top: 10px;
+    padding: 10px 20px;
+    font-size: 16px;
+    display: none;
+  }
+</style>
+</head>
+<body>
+
+<h2>Auto Runner 🚗</h2>
+<p>Kasuta ← → nooli liikumiseks</p>
+
+<canvas id="game" width="300" height="500"></canvas>
+<button id="restartBtn">Alusta uuesti</button>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+const restartBtn = document.getElementById("restartBtn");
+
+const lanes = [75, 150, 225];
+
+let playerLane, obstacles, speed, score, roadOffset, gameOver;
+
+function init() {
+  playerLane = 1;
+  obstacles = [];
+  speed = 3;
+  score = 0;
+  roadOffset = 0;
+  gameOver = false;
+  restartBtn.style.display = "none";
+}
+
+function drawCar(x, y, color) {
+  ctx.fillStyle = color;
+  ctx.fillRect(x - 12, y, 24, 40); // auto kere
+  ctx.fillStyle = "black";
+  ctx.fillRect(x - 10, y + 5, 20, 10); // aknad
+}
+
+function drawPlayer() {
+  drawCar(lanes[playerLane], 400, "red");
+}
+
+function drawObstacles() {
+  obstacles.forEach(o => drawCar(lanes[o.lane], o.y, "yellow"));
+}
+
+function updateObstacles() {
+  obstacles.forEach(o => o.y += speed);
+  obstacles = obstacles.filter(o => o.y < canvas.height);
+
+  if (Math.random() < 0.025) {
+    obstacles.push({
+      lane: Math.floor(Math.random() * 3),
+      y: -50
+    });
+  }
+}
+
+function checkCollision() {
+  for (let o of obstacles) {
+    if (o.lane === playerLane && o.y > 360 && o.y < 440) {
+      gameOver = true;
+      restartBtn.style.display = "inline-block";
+    }
+  }
+}
+
+function drawRoad() {
+  ctx.fillStyle = "#333";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  roadOffset += speed;
+
+  ctx.strokeStyle = "white";
+  ctx.setLineDash([20, 15]);
+  ctx.lineDashOffset = -roadOffset;
+
+  ctx.beginPath();
+  ctx.moveTo(100, 0);
+  ctx.lineTo(100, 500);
+  ctx.moveTo(200, 0);
+  ctx.lineTo(200, 500);
+  ctx.stroke();
+
+  ctx.setLineDash([]);
+}
+
+function drawScore() {
+  ctx.fillStyle = "white";
+  ctx.font = "16px Arial";
+  ctx.fillText("Score: " + score, 10, 20);
+}
+
+function gameLoop() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  drawRoad();
+  drawPlayer();
+  drawObstacles();
+
+  if (!gameOver) {
+    updateObstacles();
+    checkCollision();
+
+    score++;
+    speed += 0.002; // sujuv kiiruse kasv
+  } else {
+    ctx.fillStyle = "white";
+    ctx.font = "22px Arial";
+    ctx.fillText("GAME OVER", 80, 250);
+  }
+
+  drawScore();
+  requestAnimationFrame(gameLoop);
+}
+
+document.addEventListener("keydown", e => {
+  if (gameOver) return;
+  if (e.key === "ArrowLeft" && playerLane > 0) playerLane--;
+  if (e.key === "ArrowRight" && playerLane < 2) playerLane++;
+});
+
+restartBtn.onclick = () => init();
+
+init();
+gameLoop();
+</script>
+
+</body>
+</html>

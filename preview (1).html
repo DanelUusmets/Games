@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="et">
+<head>
+<meta charset="UTF-8">
+<title>Poomismäng animatsiooniga</title>
+<style>
+  body {
+    font-family: Arial;
+    text-align: center;
+    margin-top: 30px;
+  }
+  #word {
+    font-size: 2em;
+    letter-spacing: 10px;
+    margin: 20px;
+  }
+  #letters button {
+    margin: 4px;
+    padding: 8px;
+    cursor: pointer;
+  }
+  #status {
+    margin: 15px;
+    font-size: 1.2em;
+  }
+  canvas {
+    border: 2px solid black;
+    margin-top: 20px;
+  }
+</style>
+</head>
+<body>
+
+<h1>Poomismäng</h1>
+
+<canvas id="hangmanCanvas" width="200" height="250"></canvas>
+
+<div id="word"></div>
+<div id="letters"></div>
+<div id="status"></div>
+
+<button onclick="resetGame()">Uus mäng</button>
+
+<script>
+  const words = ["ARVUTI", "PROGRAMM", "KOOL", "EESTI", "MÄNG", "KASS", "KOER"];
+  let selectedWord = "";
+  let guessed = [];
+  let wrongGuesses = 0;
+  const maxWrong = 6;
+
+  const canvas = document.getElementById("hangmanCanvas");
+  const ctx = canvas.getContext("2d");
+
+  const wordDiv = document.getElementById("word");
+  const lettersDiv = document.getElementById("letters");
+  const statusText = document.getElementById("status");
+
+  function startGame() {
+    selectedWord = words[Math.floor(Math.random() * words.length)];
+    guessed = [];
+    wrongGuesses = 0;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawBase();
+    createLetters();
+    updateWord();
+    statusText.textContent = "Arva täht!";
+  }
+
+  function drawBase() {
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(10, 230); ctx.lineTo(190, 230); // maa
+    ctx.moveTo(50, 230); ctx.lineTo(50, 20);   // post
+    ctx.lineTo(130, 20);                      // ülemine
+    ctx.lineTo(130, 40);                      // köis
+    ctx.stroke();
+  }
+
+  function drawHangman(step) {
+    ctx.beginPath();
+    switch(step) {
+      case 1: // pea
+        ctx.arc(130, 60, 20, 0, Math.PI * 2);
+        break;
+      case 2: // keha
+        ctx.moveTo(130, 80); ctx.lineTo(130, 140);
+        break;
+      case 3: // vasak käsi
+        ctx.moveTo(130, 100); ctx.lineTo(100, 120);
+        break;
+      case 4: // parem käsi
+        ctx.moveTo(130, 100); ctx.lineTo(160, 120);
+        break;
+      case 5: // vasak jalg
+        ctx.moveTo(130, 140); ctx.lineTo(100, 180);
+        break;
+      case 6: // parem jalg
+        ctx.moveTo(130, 140); ctx.lineTo(160, 180);
+        break;
+    }
+    ctx.stroke();
+  }
+
+  function createLetters() {
+    lettersDiv.innerHTML = "";
+    const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZÕÄÖÜ";
+    for (let l of alphabet) {
+      const btn = document.createElement("button");
+      btn.textContent = l;
+      btn.onclick = () => guess(l, btn);
+      lettersDiv.appendChild(btn);
+    }
+  }
+
+  function guess(letter, btn) {
+    btn.disabled = true;
+
+    if (selectedWord.includes(letter)) {
+      guessed.push(letter);
+    } else {
+      wrongGuesses++;
+      drawHangman(wrongGuesses);
+    }
+
+    updateWord();
+    checkGame();
+  }
+
+  function updateWord() {
+    wordDiv.textContent = selectedWord
+      .split("")
+      .map(l => guessed.includes(l) ? l : "_")
+      .join(" ");
+  }
+
+  function checkGame() {
+    if (wrongGuesses === maxWrong) {
+      statusText.textContent = "Kaotasid! 😢 Sõna oli: " + selectedWord;
+      disableAll();
+      return;
+    }
+
+    if (selectedWord.split("").every(l => guessed.includes(l))) {
+      statusText.textContent = "Võitsid! 🎉";
+      disableAll();
+      return;
+    }
+
+    statusText.textContent = `Valed: ${wrongGuesses} / 6`;
+  }
+
+  function disableAll() {
+    document.querySelectorAll("#letters button")
+      .forEach(b => b.disabled = true);
+  }
+
+  function resetGame() {
+    startGame();
+  }
+
+  startGame();
+</script>
+
+</body>
+</html>

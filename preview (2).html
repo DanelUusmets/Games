@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="et">
+<head>
+<meta charset="UTF-8">
+<title>Battleship vs AI</title>
+<style>
+  body { font-family: Arial; text-align: center; }
+  .container { display: flex; justify-content: center; gap: 50px; }
+  .board {
+    display: grid;
+    grid-template-columns: repeat(8, 35px);
+    gap: 4px;
+    margin-top: 20px;
+  }
+  .cell {
+    width: 35px;
+    height: 35px;
+    background: #87CEEB;
+    border: 1px solid #333;
+    cursor: pointer;
+  }
+  .hit { background: red; }
+  .miss { background: white; }
+  .ship { background: gray; }
+</style>
+</head>
+<body>
+
+<h1>Battleship vs AI 🚢</h1>
+<p>Klikka paremal laual, et tulistada</p>
+
+<div class="container">
+  <div>
+    <h3>Sinu laud</h3>
+    <div id="playerBoard" class="board"></div>
+  </div>
+
+  <div>
+    <h3>Vastane (AI)</h3>
+    <div id="aiBoard" class="board"></div>
+  </div>
+</div>
+
+<div id="status"></div>
+<button onclick="startGame()">Uus mäng</button>
+
+<script>
+const size = 8;
+const shipCount = 10;
+
+let playerShips = [];
+let aiShips = [];
+let playerShots = [];
+let aiShots = [];
+let gameOver = false;
+
+const playerBoard = document.getElementById("playerBoard");
+const aiBoard = document.getElementById("aiBoard");
+const statusText = document.getElementById("status");
+
+function startGame() {
+  playerBoard.innerHTML = "";
+  aiBoard.innerHTML = "";
+  playerShips = [];
+  aiShips = [];
+  playerShots = [];
+  aiShots = [];
+  gameOver = false;
+  statusText.textContent = "Sinu kord";
+
+  createBoards();
+  placeShips(playerShips);
+  placeShips(aiShips);
+  drawPlayerShips();
+}
+
+function createBoards() {
+  for (let i = 0; i < size * size; i++) {
+    let pCell = document.createElement("div");
+    pCell.className = "cell";
+    playerBoard.appendChild(pCell);
+
+    let aCell = document.createElement("div");
+    aCell.className = "cell";
+    aCell.onclick = () => playerShoot(i, aCell);
+    aiBoard.appendChild(aCell);
+  }
+}
+
+function placeShips(arr) {
+  while (arr.length < shipCount) {
+    let pos = Math.floor(Math.random() * size * size);
+    if (!arr.includes(pos)) arr.push(pos);
+  }
+}
+
+function drawPlayerShips() {
+  document.querySelectorAll("#playerBoard .cell").forEach((cell, i) => {
+    if (playerShips.includes(i)) cell.classList.add("ship");
+  });
+}
+
+function playerShoot(i, cell) {
+  if (gameOver || playerShots.includes(i)) return;
+
+  playerShots.push(i);
+
+  if (aiShips.includes(i)) {
+    cell.classList.add("hit");
+    statusText.textContent = "Pihtas! 💥";
+  } else {
+    cell.classList.add("miss");
+    statusText.textContent = "Mööda! 🌊";
+  }
+
+  if (checkWin(aiShips, playerShots)) {
+    statusText.textContent = "Sa võitsid! 🎉";
+    gameOver = true;
+    return;
+  }
+
+  setTimeout(aiTurn, 500);
+}
+
+function aiTurn() {
+  let i;
+  do {
+    i = Math.floor(Math.random() * size * size);
+  } while (aiShots.includes(i));
+
+  aiShots.push(i);
+
+  let cells = document.querySelectorAll("#playerBoard .cell");
+
+  if (playerShips.includes(i)) {
+    cells[i].classList.add("hit");
+    statusText.textContent = "AI tabas sind! 🤖💥";
+  } else {
+    cells[i].classList.add("miss");
+    statusText.textContent = "AI mööda";
+  }
+
+  if (checkWin(playerShips, aiShots)) {
+    statusText.textContent = "AI võitis 😢";
+    gameOver = true;
+  } else {
+    setTimeout(() => {
+      statusText.textContent = "Sinu kord";
+    }, 500);
+  }
+}
+
+function checkWin(ships, shots) {
+  return ships.every(s => shots.includes(s));
+}
+
+startGame();
+</script>
+
+</body>
+</html>
